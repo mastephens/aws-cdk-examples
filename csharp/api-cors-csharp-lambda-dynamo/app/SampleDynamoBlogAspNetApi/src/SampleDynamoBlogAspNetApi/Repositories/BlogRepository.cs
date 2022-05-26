@@ -60,7 +60,7 @@ namespace SampleDynamoBlogAspNetApi.Repositories
         throw new Exception("Required Parameter blog is missing");
       }
 
-      if (blog.Id != string.Empty)
+      if (!string.IsNullOrEmpty(blog.Id))
       {
         throw new Exception("Id can not be set on create blog");
       }

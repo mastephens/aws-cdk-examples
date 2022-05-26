@@ -6,7 +6,7 @@ namespace SampleDynamoBlogAspNetApi.Models
   public class Blog
   {
     [DynamoDBHashKey]
-    public string Id { get; set; }
+    public string? Id { get; set; }
     public string Name { get; set; }
     public string Content { get; set; }
     public DateTime CreatedTimestamp { get; set; }

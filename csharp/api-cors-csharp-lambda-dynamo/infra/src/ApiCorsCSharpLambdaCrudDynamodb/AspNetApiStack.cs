@@ -48,14 +48,14 @@ public class AspNetApiStack : Stack
     var blogServiceLambda = new Function(this, "blogFunction", new FunctionProps
     {
       Runtime = Runtime.DOTNET_6,
-      Code = Code.FromAsset("../app/SampleDynamoBlogAspNetApi/src/SampleDynamoBlogAspNetApi/bin/Release/net6.0/publish/"),
+      Code = Code.FromAsset("../app/SampleDynamoBlogAspNetApi/src/SampleDynamoBlogAspNetApi/bin/Release/net6.0/linux-x64/"),
       Handler = "SampleDynamoBlogAspNetApi",
       Tracing = Tracing.ACTIVE, // enable X-Ray
       Environment = environmentVariables,
       Timeout = Duration.Seconds(30)
     });
 
-    dynamoTable.GrantReadData(blogServiceLambda);
+    dynamoTable.GrantReadWriteData(blogServiceLambda);
 
     // Create an API Gateway resource for each of the CRUD operations
     var api = new RestApi(this, apiName, new RestApiProps()
