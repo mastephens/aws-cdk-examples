@@ -6,6 +6,7 @@ using Amazon.CDK.AWS.APIGateway;
 using Amazon.CDK.AWS.DynamoDB;
 using Amazon.CDK.AWS.IAM;
 using Amazon.CDK.AWS.Lambda;
+using Amazon.CDK.AWS.Cognito;
 using Constructs;
 using Attribute = Amazon.CDK.AWS.DynamoDB.Attribute;
 
@@ -20,7 +21,6 @@ public class AspNetApiStack : Stack
     string primaryKey = "Id";
     string restApiName = "Blogs AspNet API Service";
     string apiName = "blogsAspNetApi";
-    string gatewayResourcePath = "blogs";
 
     var dynamoTable = new Table(this, tableName, new TableProps()
     {
@@ -57,6 +57,20 @@ public class AspNetApiStack : Stack
 
     dynamoTable.GrantReadWriteData(blogServiceLambda);
 
+    var pool = new UserPool(this, "blogsUserPool", new UserPoolProps()
+    {
+      SelfSignUpEnabled = true,
+      SignInAliases = new SignInAliases()
+      {
+        Email = true
+      }
+    });
+
+    var authorizer = new CognitoUserPoolsAuthorizer(this, "apiAuthorizer", new CognitoUserPoolsAuthorizerProps()
+    {
+      CognitoUserPools = new IUserPool[]{pool},
+    });
+
     // Create an API Gateway resource for each of the CRUD operations
     var api = new RestApi(this, apiName, new RestApiProps()
     {
@@ -66,10 +80,22 @@ public class AspNetApiStack : Stack
     var items = api.Root.AddProxy(new ProxyResourceOptions
     {
       DefaultIntegration = new LambdaIntegration(blogServiceLambda),
-
+      DefaultMethodOptions = new MethodOptions()
+      {
+        Authorizer = authorizer,
+        AuthorizationType = AuthorizationType.COGNITO
+      },
       // "false" will require explicitly adding methods on the `proxy` resource
-      AnyMethod = true
+      AnyMethod = true,
     });
+    var swagger = api.Root.AddResource("swagger");
+    var swaggerProxy = swagger.AddProxy(new ProxyResourceOptions()
+    {
+      DefaultIntegration = new LambdaIntegration(blogServiceLambda),
+      DefaultMethodOptions = new MethodOptions(),
+      AnyMethod = false
+    });
+    swaggerProxy.AddMethod("GET");
     AddCorsOptions(api.Root);
   }
 
