@@ -39,9 +39,9 @@ namespace SampleDynamoBlogApi.Tests
             TestLambdaContext context;
             APIGatewayProxyRequest request;
             APIGatewayProxyResponse response;
-
+            Environment.SetEnvironmentVariable("PRIMARY_KEY", this.PrimaryKey, EnvironmentVariableTarget.Process);
+            Environment.SetEnvironmentVariable("TABLE_NAME", this.TableName, EnvironmentVariableTarget.Process);
             Functions functions = new Functions(this.DDBClient, this.TableName);
-
 
             // Add a new blog post
             Blog myBlog = new Blog();
@@ -53,6 +53,7 @@ namespace SampleDynamoBlogApi.Tests
                 Body = JsonConvert.SerializeObject(myBlog)
             };
             context = new TestLambdaContext();
+
             response = await functions.AddBlogAsync(request, context);
             Assert.Equal(200, response.StatusCode);
 
@@ -64,6 +65,7 @@ namespace SampleDynamoBlogApi.Tests
                 PathParameters = new Dictionary<string, string> { { PrimaryKey, blogId } }
             };
             context = new TestLambdaContext();
+
             response = await functions.GetBlogAsync(request, context);
             Assert.Equal(200, response.StatusCode);
 
@@ -76,6 +78,7 @@ namespace SampleDynamoBlogApi.Tests
             {
             };
             context = new TestLambdaContext();
+
             response = await functions.GetBlogsAsync(request, context);
             Assert.Equal(200, response.StatusCode);
 
@@ -91,6 +94,7 @@ namespace SampleDynamoBlogApi.Tests
                 PathParameters = new Dictionary<string, string> { { PrimaryKey, blogId } }
             };
             context = new TestLambdaContext();
+
             response = await functions.RemoveBlogAsync(request, context);
             Assert.Equal(200, response.StatusCode);
 

@@ -29,7 +29,6 @@ namespace ApiCorsCSharpLambdaCrudDynamodb
           Name = primaryKey,
           Type = AttributeType.STRING
         },
-        TableName = tableName,
         /**
          *  The default removal policy is RETAIN, which means that cdk destroy will not attempt to delete
          * the new table, and it will remain in your account until manually deleted. By setting the policy to

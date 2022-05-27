@@ -26,6 +26,7 @@ namespace SampleDynamoBlogApi
     private const string PRIMARYKEY_ENVIRONMENT_VARIABLE_LOOKUP = "PRIMARY_KEY";
     private readonly string _tableName;
     private readonly string _primaryKey;
+    private readonly DynamoDBOperationConfig _opConfig;
     IDynamoDBContext DDBContext { get; set; }
 
     /// <summary>
@@ -39,6 +40,7 @@ namespace SampleDynamoBlogApi
       _primaryKey = System.Environment.GetEnvironmentVariable(PRIMARYKEY_ENVIRONMENT_VARIABLE_LOOKUP);
       if (!string.IsNullOrEmpty(_tableName))
       {
+        _opConfig = new DynamoDBOperationConfig { OverrideTableName = _tableName };
         AWSConfigsDynamoDB.Context.TypeMappings[typeof(Blog)] = new Amazon.Util.TypeMapping(typeof(Blog), _tableName);
       }
 
@@ -53,9 +55,13 @@ namespace SampleDynamoBlogApi
     /// <param name="tableName"></param>
     public Functions(IAmazonDynamoDB ddbClient, string tableName)
     {
+      _tableName = System.Environment.GetEnvironmentVariable(TABLENAME_ENVIRONMENT_VARIABLE_LOOKUP);
+      _primaryKey = System.Environment.GetEnvironmentVariable(PRIMARYKEY_ENVIRONMENT_VARIABLE_LOOKUP);
+
       if (!string.IsNullOrEmpty(tableName))
       {
         Console.WriteLine($"tableName: {tableName}");
+        _opConfig = new DynamoDBOperationConfig { OverrideTableName = tableName };
         AWSConfigsDynamoDB.Context.TypeMappings[typeof(Blog)] = new Amazon.Util.TypeMapping(typeof(Blog), tableName);
       }
 
@@ -73,7 +79,7 @@ namespace SampleDynamoBlogApi
       try
       {
         context.Logger.LogLine($"Getting blogs from {this._tableName}");
-        var blogs = await this.DDBContext.ScanAsync<Blog>(new List<ScanCondition>()).GetRemainingAsync();
+        var blogs = await this.DDBContext.ScanAsync<Blog>(new List<ScanCondition>(), operationConfig: _opConfig).GetRemainingAsync();
         context.Logger.LogLine($"Found {blogs.Count} blogs");
 
         var response = new APIGatewayProxyResponse
@@ -106,7 +112,10 @@ namespace SampleDynamoBlogApi
     {
       string blogId = null;
       if (request.PathParameters != null && request.PathParameters.ContainsKey(_primaryKey))
+      {
+        Console.WriteLine("looking in pathparamters for {0}", _primaryKey);
         blogId = request.PathParameters[_primaryKey];
+      }
       else if (request.QueryStringParameters != null && request.QueryStringParameters.ContainsKey(_primaryKey))
         blogId = request.QueryStringParameters[_primaryKey];
 
@@ -120,7 +129,7 @@ namespace SampleDynamoBlogApi
       }
 
       context.Logger.LogLine($"Getting blog {blogId}");
-      var blog = await DDBContext.LoadAsync<Blog>(blogId);
+      var blog = await DDBContext.LoadAsync<Blog>(blogId, operationConfig: _opConfig);
       context.Logger.LogLine($"Found blog: {blog != null}");
 
       if (blog == null)
@@ -174,7 +183,7 @@ namespace SampleDynamoBlogApi
       }
 
       context.Logger.LogLine($"Getting blog {blog.Id}");
-      var existingBlog = await DDBContext.LoadAsync<Blog>(blog.Id);
+      var existingBlog = await DDBContext.LoadAsync<Blog>(blog.Id, operationConfig: _opConfig);
       context.Logger.LogLine($"Found blog: {existingBlog != null}");
 
       if (existingBlog == null)
@@ -214,7 +223,7 @@ namespace SampleDynamoBlogApi
       blog.CreatedTimestamp = DateTime.Now;
 
       context.Logger.LogLine($"Saving blog with id {blog.Id}");
-      await DDBContext.SaveAsync<Blog>(blog);
+      await DDBContext.SaveAsync<Blog>(blog, operationConfig: _opConfig);
 
       var response = new APIGatewayProxyResponse
       {
@@ -247,7 +256,7 @@ namespace SampleDynamoBlogApi
       }
 
       context.Logger.LogLine($"Deleting blog with id {blogId}");
-      await this.DDBContext.DeleteAsync<Blog>(blogId);
+      await this.DDBContext.DeleteAsync<Blog>(blogId, operationConfig: _opConfig);
 
       return new APIGatewayProxyResponse
       {
