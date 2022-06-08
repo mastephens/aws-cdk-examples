@@ -20,7 +20,6 @@ public class AspNetApiStack : Stack
     string primaryKey = "Id";
     string restApiName = "Blogs AspNet API Service";
     string apiName = "blogsAspNetApi";
-    string gatewayResourcePath = "blogs";
 
     var dynamoTable = new Table(this, tableName, new TableProps()
     {
@@ -86,7 +85,7 @@ public class AspNetApiStack : Stack
             {
               // Note the single quotes around the values in this collection, they are required
               { "method.response.header.Access-Control-Allow-Headers", "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent'" },
-              { "method.response.header.Access-Control-Allow-Origin", "'*'" },
+              { "method.response.header.Access-Control-Allow-Origin", "'*,http://localhost:3000'" },
               { "method.response.header.Access-Control-Allow-Credentials", "'false'" },
               { "method.response.header.Access-Control-Allow-Methods", "'OPTIONS,GET,PUT,POST,DELETE'" }
             }

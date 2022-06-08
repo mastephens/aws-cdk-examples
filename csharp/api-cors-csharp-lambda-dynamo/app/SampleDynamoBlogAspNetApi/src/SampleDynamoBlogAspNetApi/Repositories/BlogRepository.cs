@@ -25,8 +25,11 @@ namespace SampleDynamoBlogAspNetApi.Repositories
       _logger = logger;
       // Check to see if a table name was passed in through environment variables and if so
       // add the table mapping.
-      _tableName = Environment.GetEnvironmentVariable(TABLENAME_ENVIRONMENT_VARIABLE_LOOKUP);
-      _primaryKey = Environment.GetEnvironmentVariable(PRIMARYKEY_ENVIRONMENT_VARIABLE_LOOKUP);
+      var tableName = Environment.GetEnvironmentVariable(TABLENAME_ENVIRONMENT_VARIABLE_LOOKUP);
+      _tableName = string.IsNullOrWhiteSpace(tableName) ? "blogs" : tableName;
+      var primaryKey = Environment.GetEnvironmentVariable(PRIMARYKEY_ENVIRONMENT_VARIABLE_LOOKUP);
+      _primaryKey = string.IsNullOrWhiteSpace(primaryKey) ? "Id" : primaryKey;
+
       if (!string.IsNullOrEmpty(_tableName))
       {
         AWSConfigsDynamoDB.Context.TypeMappings[typeof(Blog)] = new Amazon.Util.TypeMapping(typeof(Blog), _tableName);
